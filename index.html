@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>退勤記録</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🕒</text></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🕒</text></svg>">
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --sub: #64748b;
+      --line: #e2e8f0;
+      --accent: #0f172a;
+      --minus: #dc2626;
+      --rest: #475569;
+    }
+
+    * { box-sizing: border-box; min-width: 0; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    input, button {
+      font: inherit;
+      font-size: 16px;
+    }
+
+    .wrap {
+      width: 100%;
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 10px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 21px;
+      line-height: 1.1;
+      letter-spacing: -0.04em;
+      white-space: nowrap;
+    }
+
+    .top-actions {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .top-actions button {
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--text);
+      border-radius: 999px;
+      padding: 7px 7px;
+      min-height: 38px;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .month-display-btn {
+      min-width: 122px;
+      text-align: center;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 12px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 12px;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+    }
+
+    .section {
+      margin-bottom: 10px;
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 13px;
+      line-height: 1.2;
+      color: var(--sub);
+      font-weight: 700;
+    }
+
+    input[type="date"], input[type="number"] {
+      width: 100%;
+      min-height: 43px;
+      padding: 9px 10px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: white;
+      color: var(--text);
+    }
+
+    .date-now-row {
+      display: grid;
+      grid-template-columns: 1fr 72px 72px;
+      gap: 8px;
+      align-items: end;
+    }
+
+    .now-btn,
+    .confirm-inline-btn {
+      width: 72px;
+      min-height: 43px;
+      border: 1px solid var(--accent);
+      border-radius: 13px;
+      background: var(--accent);
+      color: white;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .confirm-inline-btn {
+      background: #334155;
+      border-color: #334155;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .compact-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
+      min-height: 55px;
+      padding: 7px 8px;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+    }
+
+    .muted, .small {
+      font-size: 12px;
+      color: var(--sub);
+      line-height: 1.4;
+    }
+
+    .compact-box button,
+    .settings-current button {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: white;
+      color: var(--text);
+      padding: 7px 10px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .picker-panel,
+    .settings-picker {
+      display: none;
+      margin-top: 7px;
+      max-height: 220px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: white;
+      padding: 8px;
+    }
+
+    .picker-panel.open,
+    .settings-picker.open {
+      display: block;
+    }
+
+    .picker-list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 5px;
+    }
+
+    .time-option {
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: white;
+      color: var(--text);
+      padding: 9px 10px;
+      font-size: 16px;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .time-option.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+      font-weight: 800;
+    }
+
+    .leave-time-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .holiday-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .rest-btn {
+      min-height: 43px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: white;
+      color: var(--text);
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .rest-btn.active {
+      background: var(--rest);
+      color: white;
+      border-color: var(--rest);
+    }
+
+    .unit-label {
+      margin-top: 3px;
+      font-size: 11px;
+      color: var(--sub);
+    }
+
+    .summary-box {
+      padding: 10px;
+      background: #f1f5f9;
+      border-radius: 16px;
+    }
+
+    .big {
+      margin-top: 2px;
+      font-size: 28px;
+      font-weight: 850;
+      letter-spacing: -0.04em;
+    }
+
+    .danger, .minus {
+      color: var(--minus);
+      font-weight: 800;
+    }
+
+    .rest-text {
+      color: var(--rest);
+      font-weight: 800;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .actions.single-action {
+      grid-template-columns: 1fr;
+    }
+
+    .actions button, .month-actions button {
+      min-height: 43px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: white;
+      color: var(--text);
+      padding: 9px 8px;
+      cursor: pointer;
+    }
+
+    .actions .primary {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+      font-weight: 800;
+    }
+
+    .monthly-summary {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .list-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .month-actions button {
+      white-space: nowrap;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 6px;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 9px 7px;
+      text-align: left;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    th {
+      color: var(--sub);
+      font-weight: 800;
+    }
+
+    .table-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .mobile-records {
+      display: none;
+    }
+
+    .record-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px;
+      margin-bottom: 8px;
+      background: #fff;
+    }
+
+    .record-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-weight: 800;
+    }
+
+    .record-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 10px;
+      font-size: 13px;
+    }
+
+    .record-grid span:nth-child(odd) {
+      color: var(--sub);
+      font-weight: 700;
+    }
+
+    .mini-btn {
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: white;
+      padding: 6px 8px;
+      cursor: pointer;
+    }
+
+    .empty {
+      border: 1px dashed var(--line);
+      border-radius: 14px;
+      padding: 22px;
+      text-align: center;
+      color: var(--sub);
+      font-size: 13px;
+    }
+
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      background: rgba(15,23,42,.08);
+    }
+
+    .overlay.open {
+      display: block;
+    }
+
+    .settings-panel {
+      display: none;
+      position: fixed;
+      right: 10px;
+      top: 60px;
+      z-index: 20;
+      width: min(330px, calc(100vw - 20px));
+      max-height: 78vh;
+      overflow-y: auto;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 12px;
+      box-shadow: 0 18px 40px rgba(15,23,42,.18);
+    }
+
+    .settings-panel.open {
+      display: block;
+    }
+
+    .settings-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .close-btn {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: white;
+      padding: 5px 9px;
+      cursor: pointer;
+    }
+
+    .settings-item {
+      margin-bottom: 12px;
+    }
+
+    .settings-current {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 10px;
+      margin-bottom: 8px;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+    }
+
+    .month-panel {
+      display: none;
+      position: absolute;
+      top: 46px;
+      right: 0;
+      z-index: 30;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 10px;
+      box-shadow: 0 14px 35px rgba(15,23,42,.16);
+    }
+
+    .month-panel.open {
+      display: block;
+    }
+
+    .month-panel-row {
+      display: grid;
+      grid-template-columns: 62px 150px 62px;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .month-panel-row input,
+    .month-panel-row button {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: white;
+      padding: 8px;
+      cursor: pointer;
+    }
+
+    .month-input-hidden {
+      display: none;
+    }
+
+    @media (max-width: 820px) {
+      .wrap {
+        padding: 8px;
+      }
+
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        grid-template-columns: auto 1fr;
+      }
+
+      h1 {
+        font-size: 20px;
+      }
+
+      .top-actions {
+        gap: 4px;
+      }
+
+      .top-actions button {
+        padding: 7px 7px;
+        font-size: 14px;
+      }
+
+      .month-display-btn {
+        min-width: 118px;
+        max-width: 118px;
+      }
+
+      .card {
+        padding: 11px;
+        border-radius: 17px;
+      }
+
+      .date-now-row {
+        grid-template-columns: 1fr 68px 68px;
+      }
+
+      .now-btn,
+      .confirm-inline-btn {
+        width: 68px;
+      }
+
+      .big {
+        font-size: 27px;
+      }
+
+      .table-scroll {
+        display: none;
+      }
+
+      .mobile-records {
+        display: block;
+      }
+
+      .month-panel {
+        right: 0;
+      }
+    }
+
+    @media (max-width: 380px) {
+      h1 {
+        font-size: 18px;
+      }
+
+      .month-display-btn {
+        min-width: 108px;
+        max-width: 108px;
+        font-size: 13px !important;
+      }
+
+      .top-actions button {
+        font-size: 13px;
+        padding: 7px 6px;
+      }
+
+      .date-now-row {
+        grid-template-columns: 1fr 62px 62px;
+      }
+
+      .now-btn,
+      .confirm-inline-btn {
+        width: 62px;
+      }
+    }
+  
+    @media (max-width: 820px) {
+      .table-scroll {
+        display: block !important;
+        overflow-x: hidden !important;
+      }
+      .mobile-records {
+        display: none !important;
+      }
+      th, td {
+        font-size: 11px !important;
+        padding: 8px 4px !important;
+        white-space: nowrap;
+      }
+      .mini-btn {
+        font-size: 11px;
+        padding: 5px 6px;
+      }
+    }
+
+  </style>
+</head>
+<body>
+  <div id="overlay" class="overlay"></div>
+
+  <div class="wrap">
+    <div class="topbar">
+      <h1>退勤記録</h1>
+      <div class="top-actions">
+        <button id="monthDisplayBtn" class="month-display-btn" type="button">2026年05月</button>
+        <input id="month" class="month-input-hidden" type="month" />
+        <div id="monthPanel" class="month-panel">
+          <div class="month-panel-row">
+            <button id="prevMonthBtn" type="button">前月</button>
+            <input id="monthPickerInput" type="month" />
+            <button id="nextMonthBtn" type="button">翌月</button>
+          </div>
+        </div>
+        <button id="settingsToggle" type="button">設定</button>
+        <button id="todayResetBtn" type="button">今日に戻す</button>
+      </div>
+    </div>
+
+    <div id="settingsPanel" class="settings-panel">
+      <div class="settings-head">
+        <div class="label" style="margin:0;">設定</div>
+        <button id="settingsClose" class="close-btn" type="button">閉じる</button>
+      </div>
+
+      <div class="settings-item">
+        <div class="label">初期の終業予定</div>
+        <div class="settings-current">
+          <span class="muted">初期値</span>
+          <button id="defaultBaseToggle" type="button">18:00</button>
+        </div>
+        <div id="defaultBasePicker" class="settings-picker">
+          <div id="defaultBaseOptions" class="picker-list"></div>
+        </div>
+      </div>
+
+      <div class="settings-item">
+        <div class="label">初期の所定時間</div>
+        <div class="settings-current">
+          <span class="muted">初期値</span>
+          <button id="defaultWorkToggle" type="button">8</button>
+        </div>
+        <div id="defaultWorkPicker" class="settings-picker">
+          <div id="defaultWorkOptions" class="picker-list"></div>
+        </div>
+        <div class="muted">有休は所定時間に加算、公休は加算しません。</div>
+      </div>
+    </div>
+
+    <div class="main-grid">
+      <div class="card">
+        <div class="section">
+          <div class="date-now-row">
+            <div>
+              <label class="label" for="date">日付</label>
+              <input id="date" type="date" />
+            </div>
+            <button id="nowBtn" class="now-btn" type="button">今</button>
+            <button id="addBtn" class="confirm-inline-btn" type="button">確定</button>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="two-col">
+            <div>
+              <label class="label">終業予定</label>
+              <div class="compact-box">
+                <span class="muted">基準</span>
+                <button id="baseToggle" type="button">18:00</button>
+              </div>
+              <div id="basePicker" class="picker-panel">
+                <div id="baseOptions" class="picker-list"></div>
+              </div>
+            </div>
+
+            <div>
+              <label class="label">所定時間</label>
+              <div class="compact-box">
+                <span class="muted">所定</span>
+                <button id="workToggle" type="button">8</button>
+              </div>
+              <div id="workPicker" class="picker-panel">
+                <div id="workOptions" class="picker-list"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <label class="label">実際の退勤時間</label>
+          <div class="leave-time-row">
+            <div>
+              <input id="leaveHour" type="number" min="0" max="24" step="1" value="18" inputmode="numeric" />
+              <div class="unit-label">時</div>
+            </div>
+            <div>
+              <input id="leaveMinute" type="number" min="0" max="59" step="1" value="0" inputmode="numeric" />
+              <div class="unit-label">分</div>
+            </div>
+          </div>
+          <div class="holiday-row">
+            <button id="publicHolidayBtn" class="rest-btn" type="button">公休</button>
+            <button id="paidHolidayBtn" class="rest-btn" type="button">有休</button>
+          </div>
+        </div>
+
+        <div class="summary-box">
+          <div class="small">自動計算された増減</div>
+          <div class="big" id="preview">0:00</div>
+          <div class="muted" id="previewNote">終業予定と実退勤の差を計算します。</div>
+        </div>
+
+
+      </div>
+
+      <div>
+        <div class="monthly-summary">
+          <div class="card">
+            <div class="label">月の残業合計</div>
+            <div class="big" id="totalOvertime">0:00</div>
+          </div>
+          <div class="card">
+            <div class="label">本日時点の所定累計</div>
+            <div class="big" id="totalWork">0</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="list-head">
+            <div class="label" style="margin:0;">日別一覧・累計</div>
+            <div class="month-actions">
+              <button id="exportBtn" type="button">CSV書き出し</button>
+            </div>
+          </div>
+          <div id="tableArea"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "taikin-kiroku-v17";
+    const SETTINGS_KEY = "taikin-kiroku-settings-v2";
+    const OLD_STORAGE_KEYS = ["taikin-kiroku-v10", "overtime-tracker-v9", "overtime-tracker-v8", "overtime-tracker-v7", "overtime-tracker-v6", "overtime-tracker-v5", "overtime-tracker-v4", "overtime-tracker-v3", "overtime-tracker-v2", "overtime-tracker-v1"];
+
+    const FALLBACK_BASE_MINUTES = 18 * 60;
+    const FALLBACK_WORK_UNITS = 32;
+
+    const $ = (id) => document.getElementById(id);
+
+    const overlay = $("overlay");
+    const monthInput = $("month");
+    const monthDisplayBtn = $("monthDisplayBtn");
+    const monthPanel = $("monthPanel");
+    const monthPickerInput = $("monthPickerInput");
+    const prevMonthBtn = $("prevMonthBtn");
+    const nextMonthBtn = $("nextMonthBtn");
+    const dateInput = $("date");
+
+    const settingsToggle = $("settingsToggle");
+    const settingsClose = $("settingsClose");
+    const settingsPanel = $("settingsPanel");
+    const todayResetBtn = $("todayResetBtn");
+    const nowBtn = $("nowBtn");
+
+    const defaultBaseToggle = $("defaultBaseToggle");
+    const defaultBasePicker = $("defaultBasePicker");
+    const defaultBaseOptions = $("defaultBaseOptions");
+    const defaultWorkToggle = $("defaultWorkToggle");
+    const defaultWorkPicker = $("defaultWorkPicker");
+    const defaultWorkOptions = $("defaultWorkOptions");
+
+    const baseToggle = $("baseToggle");
+    const basePicker = $("basePicker");
+    const baseOptions = $("baseOptions");
+    const workToggle = $("workToggle");
+    const workPicker = $("workPicker");
+    const workOptions = $("workOptions");
+
+    const leaveHourInput = $("leaveHour");
+    const leaveMinuteInput = $("leaveMinute");
+    const publicHolidayBtn = $("publicHolidayBtn");
+    const paidHolidayBtn = $("paidHolidayBtn");
+
+    const previewEl = $("preview");
+    const previewNote = $("previewNote");
+    const totalOvertimeEl = $("totalOvertime");
+    const totalWorkEl = $("totalWork");
+    const tableArea = $("tableArea");
+    const addBtn = $("addBtn");
+    const exportBtn = $("exportBtn");
+
+    const settings = loadSettings();
+    let defaultBaseMinutes = settings.defaultBaseMinutes;
+    let defaultWorkUnits = settings.defaultWorkUnits;
+    let baseMinutes = defaultBaseMinutes;
+    let workUnits = defaultWorkUnits;
+    let dayType = "work";
+    let records = loadRecords();
+
+    const today = new Date();
+    const initialMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+    const initialDate = `${initialMonth}-${String(today.getDate()).padStart(2, "0")}`;
+
+    monthInput.value = initialMonth;
+    monthPickerInput.value = initialMonth;
+    dateInput.value = initialDate;
+
+    function loadSettings() {
+      try {
+        const raw = localStorage.getItem(SETTINGS_KEY);
+        if (!raw) return { defaultBaseMinutes: FALLBACK_BASE_MINUTES, defaultWorkUnits: FALLBACK_WORK_UNITS };
+        const parsed = JSON.parse(raw);
+        return {
+          defaultBaseMinutes: typeof parsed.defaultBaseMinutes === "number" ? parsed.defaultBaseMinutes : FALLBACK_BASE_MINUTES,
+          defaultWorkUnits: typeof parsed.defaultWorkUnits === "number" ? parsed.defaultWorkUnits : FALLBACK_WORK_UNITS
+        };
+      } catch {
+        return { defaultBaseMinutes: FALLBACK_BASE_MINUTES, defaultWorkUnits: FALLBACK_WORK_UNITS };
+      }
+    }
+
+    function saveSettings() {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify({ defaultBaseMinutes, defaultWorkUnits }));
+    }
+
+    function loadRecords() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) return JSON.parse(raw);
+
+        for (const key of OLD_STORAGE_KEYS) {
+          const oldRaw = localStorage.getItem(key);
+          if (!oldRaw) continue;
+
+          const oldRecords = JSON.parse(oldRaw).map((r) => {
+            const isPublic = r.dayType === "public" || r.isRestDay === true;
+            const isPaid = r.dayType === "paid";
+            const type = isPublic ? "public" : isPaid ? "paid" : "work";
+
+            return {
+              ...r,
+              baseTime: r.baseTime || "18:00",
+              baseMinutes: typeof r.baseMinutes === "number" ? r.baseMinutes : FALLBACK_BASE_MINUTES,
+              leaveTime: r.leaveTime || "",
+              dayType: type,
+              minutes: typeof r.minutes === "number" ? r.minutes : 0,
+              workUnits: typeof r.workUnits === "number" ? r.workUnits : (type === "public" ? 0 : FALLBACK_WORK_UNITS)
+            };
+          });
+
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(oldRecords));
+          return oldRecords;
+        }
+
+        return [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveRecords() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    }
+
+    function makeTimeOptions() {
+      const options = [];
+      for (let minutes = 0; minutes <= 24 * 60; minutes += 15) options.push(minutes);
+      return options;
+    }
+
+    function makeWorkOptions() {
+      const options = [];
+      for (let units = 0; units <= 48; units += 1) options.push(units);
+      return options;
+    }
+
+    function minutesToClock(totalMinutes) {
+      if (totalMinutes === 24 * 60) return "24:00";
+      const h = Math.floor(totalMinutes / 60);
+      const m = totalMinutes % 60;
+      return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+    }
+
+    function monthToDisplay(value) {
+      if (!value) return "";
+      const [y, m] = value.split("-");
+      return `${y}年${m}月`;
+    }
+
+
+    function shortDate(value) {
+      if (!value) return "";
+      const parts = value.split("-");
+      if (parts.length !== 3) return value;
+      return `${Number(parts[1])}/${Number(parts[2])}`;
+    }
+
+    function shiftMonth(value, delta) {
+      const [y, m] = value.split("-").map(Number);
+      const d = new Date(y, m - 1 + delta, 1);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    }
+
+    function syncMonthDisplay() {
+      monthDisplayBtn.textContent = monthToDisplay(monthInput.value);
+      monthPickerInput.value = monthInput.value;
+    }
+
+    function unitsToHours(units) {
+      const value = units / 4;
+      return Number.isInteger(value) ? String(value) : value.toFixed(2).replace(/0$/, "");
+    }
+
+    function clampNumber(value, min, max) {
+      const n = Number(value);
+      if (Number.isNaN(n)) return min;
+      return Math.max(min, Math.min(max, n));
+    }
+
+    function normalizeLeaveInputs() {
+      let h = clampNumber(leaveHourInput.value, 0, 24);
+      let m = clampNumber(leaveMinuteInput.value, 0, 59);
+      if (h === 24) m = 0;
+      leaveHourInput.value = h;
+      leaveMinuteInput.value = m;
+    }
+
+    function setLeaveInputs(minutes) {
+      leaveHourInput.value = Math.floor(minutes / 60);
+      leaveMinuteInput.value = minutes % 60;
+    }
+
+    function getLeaveMinutes() {
+      const h = clampNumber(leaveHourInput.value, 0, 24);
+      let m = clampNumber(leaveMinuteInput.value, 0, 59);
+      if (h === 24) m = 0;
+      return h * 60 + m;
+    }
+
+    function formatMinutes(totalMinutes) {
+      const sign = totalMinutes < 0 ? "-" : "";
+      const abs = Math.abs(totalMinutes);
+      return `${sign}${Math.floor(abs / 60)}:${String(abs % 60).padStart(2, "0")}`;
+    }
+
+    function getCurrentOvertimeMinutes() {
+      if (dayType !== "work") return 0;
+      return getLeaveMinutes() - baseMinutes;
+    }
+
+    function getCurrentWorkUnits() {
+      if (dayType === "public") return 0;
+      return workUnits;
+    }
+
+    function getCurrentLeaveTime() {
+      if (dayType !== "work") return "";
+      normalizeLeaveInputs();
+      return minutesToClock(getLeaveMinutes());
+    }
+
+    function getCurrentMonthRecords() {
+      return records
+        .filter((r) => r.date.startsWith(monthInput.value))
+        .sort((a, b) => a.date.localeCompare(b.date));
+    }
+
+    function scrollToActive(container) {
+      const active = container.querySelector(".time-option.active");
+      if (active) active.scrollIntoView({ block: "center" });
+    }
+
+    function renderList(container, options, selected, formatter, onSelect) {
+      container.innerHTML = options.map((value) => (
+        `<button type="button" class="time-option ${value === selected ? "active" : ""}" data-value="${value}">${formatter(value)}</button>`
+      )).join("");
+
+      container.querySelectorAll("[data-value]").forEach((button) => {
+        button.addEventListener("click", () => onSelect(Number(button.dataset.value)));
+      });
+    }
+
+    function renderPickers() {
+      baseToggle.textContent = minutesToClock(baseMinutes);
+      workToggle.textContent = unitsToHours(workUnits);
+      defaultBaseToggle.textContent = minutesToClock(defaultBaseMinutes);
+      defaultWorkToggle.textContent = unitsToHours(defaultWorkUnits);
+
+      renderList(baseOptions, makeTimeOptions(), baseMinutes, minutesToClock, (value) => {
+        baseMinutes = value;
+        basePicker.classList.remove("open");
+        renderPickers();
+        renderPreview();
+      });
+
+      renderList(workOptions, makeWorkOptions(), workUnits, unitsToHours, (value) => {
+        workUnits = value;
+        workPicker.classList.remove("open");
+        renderPickers();
+        renderPreview();
+      });
+
+      renderList(defaultBaseOptions, makeTimeOptions(), defaultBaseMinutes, minutesToClock, (value) => {
+        defaultBaseMinutes = value;
+        baseMinutes = value;
+        setLeaveInputs(value);
+        saveSettings();
+        defaultBasePicker.classList.remove("open");
+        renderAll();
+      });
+
+      renderList(defaultWorkOptions, makeWorkOptions(), defaultWorkUnits, unitsToHours, (value) => {
+        defaultWorkUnits = value;
+        workUnits = value;
+        saveSettings();
+        defaultWorkPicker.classList.remove("open");
+        renderAll();
+      });
+    }
+
+    function setDayType(type) {
+      dayType = type;
+
+      publicHolidayBtn.classList.toggle("active", type === "public");
+      paidHolidayBtn.classList.toggle("active", type === "paid");
+
+      const disabled = type !== "work";
+      leaveHourInput.disabled = disabled;
+      leaveMinuteInput.disabled = disabled;
+      baseToggle.disabled = disabled;
+
+      if (disabled) {
+        leaveHourInput.value = "";
+        leaveMinuteInput.value = "";
+        basePicker.classList.remove("open");
+      } else if (leaveHourInput.value === "") {
+        setLeaveInputs(defaultBaseMinutes);
+      }
+
+      renderPreview();
+    }
+
+    function renderPreview() {
+      const overtime = getCurrentOvertimeMinutes();
+      previewEl.textContent = formatMinutes(overtime);
+      previewEl.className = "big" + (overtime < 0 ? " danger" : "");
+
+      if (dayType === "public") {
+        previewNote.textContent = "公休：残業0:00／所定時間に加算なし";
+      } else if (dayType === "paid") {
+        previewNote.textContent = `有休：残業0:00／所定 ${unitsToHours(workUnits)}時間を加算`;
+      } else {
+        previewNote.textContent = `予定 ${minutesToClock(baseMinutes)} ／ 実退勤 ${minutesToClock(getLeaveMinutes())} ／ 所定 ${unitsToHours(workUnits)}時間`;
+      }
+    }
+
+
+    function getTodayString() {
+      const now = new Date();
+      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    }
+
+    function renderTable() {
+      const monthly = getCurrentMonthRecords();
+      const totalOvertime = monthly.reduce((sum, r) => sum + (r.minutes || 0), 0);
+      const todayString = getTodayString();
+      const totalWorkUnitsToday = monthly
+        .filter((r) => r.date <= todayString)
+        .reduce((sum, r) => sum + (r.workUnits || 0), 0);
+
+      totalOvertimeEl.textContent = formatMinutes(totalOvertime);
+      totalOvertimeEl.className = "big" + (totalOvertime < 0 ? " danger" : "");
+      totalWorkEl.textContent = unitsToHours(totalWorkUnitsToday);
+
+      if (monthly.length === 0) {
+        tableArea.innerHTML = '<div class="empty">まだデータがありません。</div>';
+        return;
+      }
+
+      let overtimeRunning = 0;
+      let workRunning = 0;
+
+      const rows = monthly.map((record) => {
+        overtimeRunning += record.minutes || 0;
+        workRunning += record.workUnits || 0;
+
+        const type = record.dayType || "work";
+        const typeLabel = type === "public" ? "公休" : type === "paid" ? "有休" : "出勤";
+        const typeClass = type === "work" ? "" : "rest-text";
+        const baseDisplay = type === "work" ? (record.baseTime || "18:00") : "-";
+        const leaveDisplay = type === "work" ? (record.leaveTime || "-") : "-";
+        const changeDisplay = type === "work" ? formatMinutes(record.minutes || 0) : "0:00";
+
+        return {
+          html: `
+            <tr>
+              <td>${shortDate(record.date)}</td>
+              <td class="${typeClass}">${typeLabel}</td>
+              <td>${unitsToHours(record.workUnits || 0)}</td>
+              <td>${unitsToHours(workRunning)}</td>
+              <td>${baseDisplay}</td>
+              <td>${leaveDisplay}</td>
+              <td class="${(record.minutes || 0) < 0 ? "minus" : ""}">${changeDisplay}</td>
+              <td class="${overtimeRunning < 0 ? "minus" : ""}">${formatMinutes(overtimeRunning)}</td>
+              <td><button class="mini-btn" data-id="${record.id}">削除</button></td>
+            </tr>
+          `,
+          card: ``
+        };
+      });
+
+      tableArea.innerHTML = `
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>日付</th><th>区分</th><th>所定</th><th>所定累</th><th>終業</th>
+                <th>実退</th><th>増減</th><th>残業累</th><th>操作</th>
+              </tr>
+            </thead>
+            <tbody>${rows.map(r => r.html).join("")}</tbody>
+          </table>
+        </div>
+
+      `;
+
+      document.querySelectorAll("[data-id]").forEach((button) => {
+        button.addEventListener("click", () => {
+          records = records.filter((record) => record.id !== button.dataset.id);
+          saveRecords();
+          renderAll();
+        });
+      });
+    }
+
+    function renderAll() {
+      const selectedMonth = monthInput.value;
+      if (dateInput.value && !dateInput.value.startsWith(selectedMonth)) {
+        dateInput.value = `${selectedMonth}-01`;
+      }
+
+      syncMonthDisplay();
+      renderPickers();
+      renderPreview();
+      renderTable();
+    }
+
+    function resetInputsToDefault() {
+      baseMinutes = defaultBaseMinutes;
+      workUnits = defaultWorkUnits;
+      setLeaveInputs(defaultBaseMinutes);
+      setDayType("work");
+      basePicker.classList.remove("open");
+      workPicker.classList.remove("open");
+      renderPickers();
+    }
+
+    function openSettings() {
+      settingsPanel.classList.add("open");
+      overlay.classList.add("open");
+      renderPickers();
+    }
+
+    function closeSettings() {
+      settingsPanel.classList.remove("open");
+      overlay.classList.remove("open");
+      defaultBasePicker.classList.remove("open");
+      defaultWorkPicker.classList.remove("open");
+    }
+
+    settingsToggle.addEventListener("click", openSettings);
+    settingsClose.addEventListener("click", closeSettings);
+    overlay.addEventListener("click", closeSettings);
+
+    todayResetBtn.addEventListener("click", () => {
+      const now = new Date();
+      const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      const currentDate = `${currentMonth}-${String(now.getDate()).padStart(2, "0")}`;
+
+      monthInput.value = currentMonth;
+      dateInput.value = currentDate;
+      resetInputsToDefault();
+      closeSettings();
+      renderAll();
+    });
+
+    nowBtn.addEventListener("click", () => {
+      const now = new Date();
+      const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      const currentDate = `${currentMonth}-${String(now.getDate()).padStart(2, "0")}`;
+
+      monthInput.value = currentMonth;
+      dateInput.value = currentDate;
+      setLeaveInputs(now.getHours() * 60 + now.getMinutes());
+      setDayType("work");
+      renderAll();
+    });
+
+    function togglePicker(panel, optionsContainer) {
+      panel.classList.toggle("open");
+      if (panel.classList.contains("open")) {
+        setTimeout(() => scrollToActive(optionsContainer), 0);
+      }
+    }
+
+    baseToggle.addEventListener("click", () => togglePicker(basePicker, baseOptions));
+    workToggle.addEventListener("click", () => togglePicker(workPicker, workOptions));
+    defaultBaseToggle.addEventListener("click", () => togglePicker(defaultBasePicker, defaultBaseOptions));
+    defaultWorkToggle.addEventListener("click", () => togglePicker(defaultWorkPicker, defaultWorkOptions));
+
+    publicHolidayBtn.addEventListener("click", () => setDayType(dayType === "public" ? "work" : "public"));
+    paidHolidayBtn.addEventListener("click", () => setDayType(dayType === "paid" ? "work" : "paid"));
+
+    leaveHourInput.addEventListener("input", () => {
+      if (leaveHourInput.value !== "") normalizeLeaveInputs();
+      renderPreview();
+    });
+
+    leaveMinuteInput.addEventListener("input", () => {
+      if (leaveMinuteInput.value !== "") normalizeLeaveInputs();
+      renderPreview();
+    });
+
+    monthDisplayBtn.addEventListener("click", () => {
+      monthPanel.classList.toggle("open");
+      monthPickerInput.value = monthInput.value;
+    });
+
+    monthPickerInput.addEventListener("input", () => {
+      monthInput.value = monthPickerInput.value;
+      monthPanel.classList.remove("open");
+      renderAll();
+    });
+
+    prevMonthBtn.addEventListener("click", () => {
+      monthInput.value = shiftMonth(monthInput.value, -1);
+      renderAll();
+    });
+
+    nextMonthBtn.addEventListener("click", () => {
+      monthInput.value = shiftMonth(monthInput.value, 1);
+      renderAll();
+    });
+
+    addBtn.addEventListener("click", () => {
+      const date = dateInput.value;
+      if (!date) return;
+
+      if (dayType === "work") normalizeLeaveInputs();
+
+      const record = {
+        id: crypto.randomUUID(),
+        date,
+        dayType,
+        baseTime: dayType === "work" ? minutesToClock(baseMinutes) : "",
+        baseMinutes: dayType === "work" ? baseMinutes : null,
+        leaveTime: getCurrentLeaveTime(),
+        minutes: getCurrentOvertimeMinutes(),
+        workUnits: getCurrentWorkUnits(),
+        workHours: getCurrentWorkUnits() / 4
+      };
+
+      records = records.filter((r) => r.date !== date);
+      records.push(record);
+      saveRecords();
+
+      const currentDate = new Date(date);
+      currentDate.setDate(currentDate.getDate() + 1);
+      const next = currentDate.toISOString().slice(0, 10);
+      if (next.startsWith(monthInput.value)) dateInput.value = next;
+
+      resetInputsToDefault();
+      renderAll();
+    });
+
+    exportBtn.addEventListener("click", () => {
+      const monthly = getCurrentMonthRecords();
+      if (monthly.length === 0) return;
+
+      let overtimeRunning = 0;
+      let workRunning = 0;
+      const csvRows = [["日付","区分","終業予定","実退勤","所定時間","増減","残業累計","所定累計"]];
+
+      monthly.forEach((record) => {
+        overtimeRunning += record.minutes || 0;
+        workRunning += record.workUnits || 0;
+
+        const typeLabel = record.dayType === "public" ? "公休" : record.dayType === "paid" ? "有休" : "出勤";
+
+        csvRows.push([
+          record.date,
+          typeLabel,
+          record.dayType === "work" ? (record.baseTime || "") : "",
+          record.dayType === "work" ? (record.leaveTime || "") : "",
+          unitsToHours(record.workUnits || 0),
+          record.dayType === "work" ? formatMinutes(record.minutes || 0) : "0:00",
+          formatMinutes(overtimeRunning),
+          unitsToHours(workRunning)
+        ]);
+      });
+
+      const csv = csvRows.map((row) => row.join(",")).join("\n");
+      const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+      const blob = new Blob([bom, csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `退勤記録_${monthInput.value}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    });
+
+    setLeaveInputs(defaultBaseMinutes);
+    setDayType("work");
+    renderAll();
+  </script>
+</body>
+</html>
